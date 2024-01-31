@@ -17,6 +17,31 @@ class LFUCache(BaseCaching):
         self.cache_data = OrderedDict()
         self.keys_freq = []
 
+    def __reorder_items(self, mru_key):
+        """Rearranges items in cache based on the most
+        recently used item.
+        """
+        freq = 0
+        max_positions = []
+        pos = 0
+        ins_pos = 0
+        for i, key_freq in enumerate(self.keys_freq):
+            if key_freq[0] == mru_key:
+                freq = key_freq[1] + 1
+                pos = i
+                break
+            elif len(max_positions) == 0:
+                max_positions.append(i)
+            elif key_freq[1] < self.keys_freq[max_positions[-1]][1]:
+                max_positions.append(i)
+        max_positions.reverse()
+        for p in max_positions:
+            if self.keys_freq[p][1] > freq:
+                break
+            ins_pos = p
+        self.keys_freq.pop(pos)
+        self.keys_freq.insert(ins_pos, [mru_key, freq])
+
     def get(self, key):
         """Retrieves item by key.
         """
@@ -45,28 +70,3 @@ class LFUCache(BaseCaching):
         else:
             self.cache_data[key] = item
             self.__reorder_items(key)
-
-    def __reorder_items(self, mru_key):
-        """Rearranges items in cache based on the most
-        recently used item.
-        """
-	freq = 0
-        max_positions = []
-        pos = 0
-        ins_pos = 0
-        for i, key_freq in enumerate(self.keys_freq):
-            if key_freq[0] == mru_key:
-                freq = key_freq[1] + 1
-                pos = i
-                break
-            elif len(max_positions) == 0:
-                max_positions.append(i)
-            elif key_freq[1] < self.keys_freq[max_positions[-1]][1]:
-                max_positions.append(i)
-        max_positions.reverse()
-        for p in max_positions:
-            if self.keys_freq[p][1] > freq:
-                break
-            ins_pos = p
-        self.keys_freq.pop(pos)
-        self.keys_freq.insert(ins_pos, [mru_key, freq])
